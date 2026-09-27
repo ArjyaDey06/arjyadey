@@ -569,31 +569,58 @@ export default function AdminClient({
           </div>
         ))}
 
-        {/* STACK */}
-        {activeTab === 'stack' && skills.map((s: any) => {
-          const iconUrl = getTechIcon(s.name, s.icon_name);
-          return (
-            <div key={s.id} className="w-full flex items-center justify-between p-4 bg-zinc-950 border border-zinc-800 rounded-xl hover:border-zinc-600 transition-colors">
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-9 h-9 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 p-1.5 overflow-hidden">
-                  <img src={iconUrl} alt={s.name} className="w-full h-full object-contain" />
+        {/* STACK GRID */}
+        {activeTab === 'stack' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
+            {skills.map((s: any) => {
+              const iconUrl = getTechIcon(s.name, s.icon_name);
+              return (
+                <div
+                  key={s.id}
+                  className="group relative p-4 bg-zinc-950/80 border border-zinc-800/80 hover:border-zinc-600 rounded-2xl flex items-center justify-between gap-3 hover:bg-zinc-900/60 transition-all duration-200 shadow-sm"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 shrink-0 flex items-center justify-center">
+                      <img
+                        src={iconUrl}
+                        alt={s.name}
+                        className="w-full h-full object-contain filter group-hover:brightness-110 transition-all"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLElement).style.display = 'none';
+                        }}
+                      />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <h3 className="font-semibold text-zinc-100 text-sm truncate group-hover:text-white transition-colors">
+                        {s.name}
+                      </h3>
+                      <span className="text-[11px] text-zinc-400 truncate mt-0.5">
+                        {s.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => openEdit(s)}
+                      className="p-1.5 text-zinc-400 hover:text-blue-400 hover:bg-zinc-800/80 rounded-lg transition-colors"
+                      title="Edit"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete('skills', s.id)}
+                      className="p-1.5 text-zinc-400 hover:text-red-400 hover:bg-zinc-800/80 rounded-lg transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex flex-col gap-0.5 min-w-0">
-                  <h3 className="font-semibold text-zinc-100">{s.name}</h3>
-                  <span className="text-xs text-zinc-400">{s.category}</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <button onClick={() => openEdit(s)} className="text-zinc-500 hover:text-blue-400" title="Edit">
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                <button onClick={() => handleDelete('skills', s.id)} className="text-zinc-500 hover:text-red-400" title="Delete">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          );
-        })}
+              );
+            })}
+          </div>
+        )}
 
         {/* RESUMES */}
         {activeTab === 'resumes' && resumes.map((r: any) => (

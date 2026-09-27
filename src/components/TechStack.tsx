@@ -70,13 +70,14 @@ function TechCard({ tech }: { tech: Skill }) {
       className="group p-3.5 sm:p-4 bg-zinc-950/70 border border-zinc-800/80 hover:border-zinc-600 rounded-2xl flex items-center gap-3.5 hover:bg-zinc-900/60 transition-colors shadow-sm hover:shadow-lg hover:shadow-black/40 hover:-translate-y-0.5"
     >
       {/* Tech Vector Logo */}
-      <div className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 flex items-center justify-center p-1 rounded-xl bg-zinc-900/90 border border-zinc-800/60 group-hover:border-zinc-700 transition-colors">
+      <div className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 flex items-center justify-center">
         <img
           src={iconUrl}
           alt={tech.name}
           loading="lazy"
           className="w-full h-full object-contain filter group-hover:brightness-110 transition-all"
           onError={(e) => {
+            // Fallback to minimal dot/icon if URL fails
             (e.currentTarget as HTMLElement).style.display = 'none';
           }}
         />
@@ -129,7 +130,7 @@ export default function TechStack({ skills = [] }: Props) {
       {/* Section Header */}
       <div className="flex flex-col gap-1">
         <h2 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-3">
-          <Wrench className="w-6 h-6 sm:w-7 sm:h-7 text-emerald-400" /> Tech Stack
+          <Wrench className="w-6 h-6 sm:w-7 sm:h-7 text-emerald-400" /> What Am I Made Of?
         </h2>
         <p className="text-sm text-zinc-400">
           Languages, frameworks, databases, and tools I use to build scalable software
