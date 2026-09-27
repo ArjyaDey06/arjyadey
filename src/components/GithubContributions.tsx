@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { ActivityCalendar } from 'react-activity-calendar';
 import { GitHubCalendar } from 'react-github-calendar';
 import type { ActivityDay } from '@/utils/github';
-import { GitCommit, Sparkles } from 'lucide-react';
+import { GitCommit, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Props {
   username: string;
@@ -31,10 +31,30 @@ function formatDateTooltip(count: number, dateStr: string) {
 export default function GithubContributions({ username, initialData }: Props) {
   const [mounted, setMounted] = useState(false);
   const [hoveredDay, setHoveredDay] = useState<{ text: string; x: number; y: number } | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      setCanScrollLeft(scrollLeft > 15);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 15);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (mounted && scrollContainerRef.current) {
+      // Scroll to the latest contributions (rightmost edge) by default
+      const el = scrollContainerRef.current;
+      el.scrollLeft = el.scrollWidth;
+      checkScroll();
+    }
+  }, [mounted, initialData]);
 
   const total = initialData?.totalContributions ?? 552;
 
@@ -48,13 +68,32 @@ export default function GithubContributions({ username, initialData }: Props) {
     });
   };
 
+  const handleScroll = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const shift = direction === 'left' ? -280 : 280;
+      scrollContainerRef.current.scrollBy({ left: shift, behavior: 'smooth' });
+    }
+  };
+
+  const scrollToStart = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+  };
+
+  const scrollToRecent = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ left: scrollContainerRef.current.scrollWidth, behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div className="relative group rounded-3xl border border-zinc-800/80 bg-gradient-to-b from-zinc-900/60 via-zinc-950/80 to-black p-6 sm:p-8 shadow-2xl transition-all duration-300 hover:border-emerald-500/30">
+    <div className="relative group rounded-3xl border border-zinc-800/80 bg-gradient-to-b from-zinc-900/60 via-zinc-950/80 to-black p-5 sm:p-8 shadow-2xl transition-all duration-300 hover:border-emerald-500/30">
       {/* Background Glow Accent */}
       <div className="absolute -top-24 -right-24 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-emerald-500/15 transition-all duration-500" />
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-zinc-800/60 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 sm:mb-6 border-b border-zinc-800/60 pb-4 sm:pb-5">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-emerald-400 shadow-inner">
             <GitCommit className="w-5 h-5" />
@@ -74,69 +113,118 @@ export default function GithubContributions({ username, initialData }: Props) {
           </div>
         </div>
 
-        <a 
-          href={`https://github.com/${username}`} 
-          target="_blank" 
-          rel="noreferrer"
-          className="inline-flex items-center self-start sm:self-auto gap-1.5 px-3.5 py-1.5 rounded-full bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 text-xs font-medium text-zinc-300 hover:text-white transition-all duration-200 shadow-sm"
-        >
-          @{username}
-          <span className="text-zinc-500 group-hover:text-zinc-300">↗</span>
-        </a>
+        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+          {/* Active Navigation Arrow Buttons */}
+          <div className="flex items-center gap-1 bg-zinc-900/90 border border-zinc-800 rounded-full p-1 shadow-inner">
+            <button
+              type="button"
+              onClick={() => handleScroll('left')}
+              className="p-1.5 rounded-full text-zinc-300 hover:text-white hover:bg-zinc-800 active:scale-95 transition-all cursor-pointer"
+              title="Slide Left (Earlier Months)"
+              aria-label="Slide Left"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleScroll('right')}
+              className="p-1.5 rounded-full text-zinc-300 hover:text-white hover:bg-zinc-800 active:scale-95 transition-all cursor-pointer"
+              title="Slide Right (Recent Activity)"
+              aria-label="Slide Right"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          <a 
+            href={`https://github.com/${username}`} 
+            target="_blank" 
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 text-xs font-medium text-zinc-300 hover:text-white transition-all duration-200 shadow-sm"
+          >
+            @{username}
+            <span className="text-zinc-500 group-hover:text-zinc-300">↗</span>
+          </a>
+        </div>
       </div>
 
-      {/* Calendar Grid Container */}
-      <div 
-        className="w-full overflow-hidden flex justify-center items-center py-2"
-        onMouseLeave={() => setHoveredDay(null)}
-      >
-        {!mounted ? (
-          <div className="h-[120px] w-full animate-pulse bg-zinc-900/30 rounded-2xl" />
-        ) : initialData && initialData.days.length > 0 ? (
-          <div className="scale-[0.98] sm:scale-100 transform transition-transform">
-            <ActivityCalendar
-              data={initialData.days}
-              colorScheme="dark"
-              blockSize={11}
-              blockMargin={3}
-              blockRadius={2.5}
-              fontSize={12}
-              theme={{
-                dark: ['#18181b', '#064e3b', '#047857', '#059669', '#10b981'],
-              }}
-              renderBlock={(block, activity) => {
-                const tooltipText = formatDateTooltip(activity.count, activity.date);
-                return React.cloneElement(block, {
-                  style: { cursor: 'pointer' },
-                  onMouseEnter: (e: React.MouseEvent) => handleMouseEnter(e, tooltipText),
-                  onMouseLeave: () => setHoveredDay(null),
-                });
-              }}
-            />
+      {/* Calendar Scrollable Grid Container */}
+      <div className="relative w-full overflow-hidden">
+        <div 
+          ref={scrollContainerRef}
+          data-lenis-prevent
+          onScroll={() => setHoveredDay(null)}
+          onMouseLeave={() => setHoveredDay(null)}
+          className="w-full overflow-x-auto no-scrollbar scroll-smooth py-2 block"
+          style={{
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
+          }}
+        >
+          <div className="w-max min-w-full flex justify-center px-4">
+            {!mounted ? (
+              <div className="h-[120px] w-[750px] animate-pulse bg-zinc-900/30 rounded-2xl" />
+            ) : initialData && initialData.days.length > 0 ? (
+              <ActivityCalendar
+                data={initialData.days}
+                colorScheme="dark"
+                blockSize={11}
+                blockMargin={3}
+                blockRadius={2.5}
+                fontSize={12}
+                theme={{
+                  dark: ['#18181b', '#064e3b', '#047857', '#059669', '#10b981'],
+                }}
+                renderBlock={(block, activity) => {
+                  const tooltipText = formatDateTooltip(activity.count, activity.date);
+                  return React.cloneElement(block, {
+                    style: { cursor: 'pointer' },
+                    onMouseEnter: (e: React.MouseEvent) => handleMouseEnter(e, tooltipText),
+                    onMouseLeave: () => setHoveredDay(null),
+                  });
+                }}
+              />
+            ) : (
+              <GitHubCalendar
+                username={username}
+                colorScheme="dark"
+                blockSize={11}
+                blockMargin={3}
+                blockRadius={2.5}
+                fontSize={12}
+                theme={{
+                  dark: ['#18181b', '#064e3b', '#047857', '#059669', '#10b981'],
+                }}
+                renderBlock={(block, activity) => {
+                  const tooltipText = formatDateTooltip(activity.count, activity.date);
+                  return React.cloneElement(block, {
+                    style: { cursor: 'pointer' },
+                    onMouseEnter: (e: React.MouseEvent) => handleMouseEnter(e, tooltipText),
+                    onMouseLeave: () => setHoveredDay(null),
+                  });
+                }}
+              />
+            )}
           </div>
-        ) : (
-          <div className="scale-[0.98] sm:scale-100 transform transition-transform">
-            <GitHubCalendar
-              username={username}
-              colorScheme="dark"
-              blockSize={11}
-              blockMargin={3}
-              blockRadius={2.5}
-              fontSize={12}
-              theme={{
-                dark: ['#18181b', '#064e3b', '#047857', '#059669', '#10b981'],
-              }}
-              renderBlock={(block, activity) => {
-                const tooltipText = formatDateTooltip(activity.count, activity.date);
-                return React.cloneElement(block, {
-                  style: { cursor: 'pointer' },
-                  onMouseEnter: (e: React.MouseEvent) => handleMouseEnter(e, tooltipText),
-                  onMouseLeave: () => setHoveredDay(null),
-                });
-              }}
-            />
-          </div>
-        )}
+        </div>
+      </div>
+
+      {/* Quick Jump Shortcuts */}
+      <div className="flex items-center justify-between pt-3 border-t border-zinc-800/40 mt-2 text-[11px] text-zinc-500">
+        <button
+          type="button"
+          onClick={scrollToStart}
+          className="hover:text-zinc-300 transition-colors cursor-pointer"
+        >
+          ← View earlier months
+        </button>
+        <button
+          type="button"
+          onClick={scrollToRecent}
+          className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors cursor-pointer"
+        >
+          Jump to latest →
+        </button>
       </div>
 
       {/* Floating Pop-Up Hover Tooltip (Rendered via Portal to avoid clipping) */}
