@@ -139,16 +139,17 @@ export default function GithubContributions({ username, initialData }: Props) {
       </div>
 
       {/* Calendar Scrollable Grid Container */}
-      <div className="relative w-full overflow-hidden">
+      <div className="relative w-full overflow-hidden transform-gpu">
         <div 
           ref={scrollContainerRef}
-          data-lenis-prevent
           onScroll={() => setHoveredDay(null)}
           onMouseLeave={() => setHoveredDay(null)}
-          className="w-full overflow-x-auto no-scrollbar scroll-smooth py-2 block"
+          className="w-full overflow-x-auto no-scrollbar scroll-smooth py-2 block will-change-scroll"
           style={{
             WebkitOverflowScrolling: 'touch',
             scrollbarWidth: 'none',
+            overscrollBehaviorX: 'contain',
+            overscrollBehaviorY: 'auto',
           }}
         >
           <div className="w-max min-w-full flex justify-center px-4">
