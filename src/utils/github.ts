@@ -41,7 +41,7 @@ export async function getGitHubContributions(username: string): Promise<Contribu
           'User-Agent': 'Portfolio-App',
         },
         body: JSON.stringify({ query, variables: { username } }),
-        next: { revalidate: 3600 }, // Cache for 1 hour
+        next: { revalidate: 60 }, // Cache for 1 minute so new commits appear quickly
       });
 
       if (!res.ok) {
