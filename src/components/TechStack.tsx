@@ -57,6 +57,44 @@ function getCategoryIcon(category: string) {
   return Tag;
 }
 
+function TechCard({ tech }: { tech: Skill }) {
+  const iconUrl = getTechIcon(tech.name, tech.icon_name);
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{ duration: 0.25 }}
+      className="group p-3.5 sm:p-4 bg-zinc-950/70 border border-zinc-800/80 hover:border-zinc-600 rounded-2xl flex items-center gap-3.5 hover:bg-zinc-900/60 transition-colors shadow-sm hover:shadow-lg hover:shadow-black/40 hover:-translate-y-0.5"
+    >
+      {/* Tech Vector Logo */}
+      <div className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 flex items-center justify-center p-1 rounded-xl bg-zinc-900/90 border border-zinc-800/60 group-hover:border-zinc-700 transition-colors">
+        <img
+          src={iconUrl}
+          alt={tech.name}
+          loading="lazy"
+          className="w-full h-full object-contain filter group-hover:brightness-110 transition-all"
+          onError={(e) => {
+            (e.currentTarget as HTMLElement).style.display = 'none';
+          }}
+        />
+      </div>
+
+      {/* Tool Name & Category */}
+      <div className="flex flex-col min-w-0">
+        <span className="font-semibold text-zinc-100 text-sm sm:text-base leading-tight truncate group-hover:text-white transition-colors">
+          {tech.name}
+        </span>
+        <span className="text-[11px] text-zinc-500 truncate mt-0.5 group-hover:text-zinc-400 transition-colors">
+          {tech.category}
+        </span>
+      </div>
+    </motion.div>
+  );
+}
+
 export default function TechStack({ skills = [] }: Props) {
   const [activeCategory, setActiveCategory] = useState<string>('All');
 
@@ -122,52 +160,15 @@ export default function TechStack({ skills = [] }: Props) {
         })}
       </div>
 
-      {/* Tech Grid with Smooth Motion Transition */}
-      <motion.div layout className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+      {/* Grid Cards - The Magic is Here */}
+      <motion.div 
+        layout
+        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4"
+      >
         <AnimatePresence mode="popLayout">
-          {filteredSkills.map((skill) => {
-            const iconUrl = getTechIcon(skill.name, skill.icon_name);
-
-            return (
-              <motion.div
-                layout
-                key={skill.id || skill.name}
-                initial={{ opacity: 0, scale: 0.92, y: 8 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.92, y: -8 }}
-                transition={{ 
-                  duration: 0.32, 
-                  ease: [0.22, 1, 0.36, 1],
-                  layout: { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
-                }}
-                className="group p-3.5 sm:p-4 bg-zinc-950/70 border border-zinc-800/80 hover:border-zinc-600 rounded-2xl flex items-center gap-3.5 hover:bg-zinc-900/60 transition-colors shadow-sm hover:shadow-lg hover:shadow-black/40 hover:-translate-y-0.5"
-              >
-                {/* Tech Vector Logo */}
-                <div className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 flex items-center justify-center p-1 rounded-xl bg-zinc-900/90 border border-zinc-800/60 group-hover:border-zinc-700 transition-colors">
-                  <img
-                    src={iconUrl}
-                    alt={skill.name}
-                    loading="lazy"
-                    className="w-full h-full object-contain filter group-hover:brightness-110 transition-all"
-                    onError={(e) => {
-                      // Fallback to minimal dot/icon if URL fails
-                      (e.currentTarget as HTMLElement).style.display = 'none';
-                    }}
-                  />
-                </div>
-
-                {/* Tool Name & Category */}
-                <div className="flex flex-col min-w-0">
-                  <span className="font-semibold text-zinc-100 text-sm sm:text-base leading-tight truncate group-hover:text-white transition-colors">
-                    {skill.name}
-                  </span>
-                  <span className="text-[11px] text-zinc-500 truncate mt-0.5 group-hover:text-zinc-400 transition-colors">
-                    {skill.category}
-                  </span>
-                </div>
-              </motion.div>
-            );
-          })}
+          {filteredSkills.map((tech) => (
+            <TechCard key={tech.name} tech={tech} />
+          ))}
         </AnimatePresence>
       </motion.div>
 
