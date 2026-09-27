@@ -101,7 +101,6 @@ export default function GithubContributions({ username, initialData }: Props) {
               blockMargin={3}
               blockRadius={2.5}
               fontSize={12}
-              hideTotalCount={true}
               theme={{
                 dark: ['#18181b', '#064e3b', '#047857', '#059669', '#10b981'],
               }}
@@ -124,7 +123,6 @@ export default function GithubContributions({ username, initialData }: Props) {
               blockMargin={3}
               blockRadius={2.5}
               fontSize={12}
-              hideTotalCount={true}
               theme={{
                 dark: ['#18181b', '#064e3b', '#047857', '#059669', '#10b981'],
               }}

@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   addProject, 
   updateProject, 
   addExperience, 
-  updateExperience, 
+  updateExperience,
+  addEducation,
+  updateEducation,
   addTestimonial, 
   updateTestimonial, 
   addSkill, 
@@ -15,13 +17,182 @@ import {
   togglePublish 
 } from './actions'
 import { createClient } from '@/utils/supabase/client'
-import { Eye, EyeOff, Edit2, Trash2 } from 'lucide-react'
+import { 
+  Eye, 
+  EyeOff, 
+  Edit2, 
+  Trash2, 
+  UploadCloud, 
+  Loader2, 
+  Briefcase,
+  GraduationCap,
+  Image as ImageIcon 
+} from 'lucide-react'
 
-type Tab = 'projects' | 'experience' | 'resumes' | 'testimonials' | 'stack'
+function ImageUploadField({
+  label,
+  name,
+  defaultValue = '',
+  supabase,
+  folder = 'logos',
+}: {
+  label: string
+  name: string
+  defaultValue?: string
+  supabase: any
+  folder?: string
+}) {
+  const [url, setUrl] = useState(defaultValue || '')
+  const [isUploading, setIsUploading] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [manualMode, setManualMode] = useState(false)
+
+  useEffect(() => {
+    setUrl(defaultValue || '')
+  }, [defaultValue])
+
+  const handleFile = async (file: File) => {
+    if (!file) return
+    if (!file.type.startsWith('image/') && !file.name.endsWith('.svg')) {
+      alert('Please upload a valid image file (PNG, JPG, SVG, WebP)')
+      return
+    }
+
+    try {
+      setIsUploading(true)
+      const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
+      const filePath = `${folder}/${Date.now()}-${cleanName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('portfolio-assets')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true,
+        })
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('portfolio-assets')
+        .getPublicUrl(filePath)
+
+      setUrl(publicUrl)
+    } catch (err: any) {
+      console.error(err)
+      alert(`Failed to upload image: ${err.message || 'Unknown error'}`)
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFile(e.dataTransfer.files[0])
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between">
+        <label className="text-xs font-medium text-zinc-300">{label}</label>
+        <button
+          type="button"
+          onClick={() => setManualMode(!manualMode)}
+          className="text-[11px] text-zinc-500 hover:text-emerald-400 transition-colors"
+        >
+          {manualMode ? 'Upload from device' : 'Enter URL instead'}
+        </button>
+      </div>
+
+      <input type="hidden" name={name} value={url} />
+
+      {manualMode ? (
+        <input
+          type="text"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="https://... or /logos/example.svg"
+          className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500"
+        />
+      ) : url ? (
+        <div className="flex items-center justify-between p-2.5 bg-zinc-900/90 border border-zinc-800 rounded-xl">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-lg bg-zinc-950 border border-zinc-800 flex items-center justify-center overflow-hidden shrink-0">
+              <img src={url} alt="Logo Preview" className="w-full h-full object-contain p-1" />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs text-zinc-200 truncate max-w-[180px] sm:max-w-[220px] font-mono">
+                {url.split('/').pop()}
+              </span>
+              <span className="text-[10px] text-emerald-400 font-medium">Uploaded</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <label className="cursor-pointer px-2.5 py-1 text-xs text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700 rounded-md transition-colors">
+              Change
+              <input
+                type="file"
+                accept="image/*,.svg"
+                className="hidden"
+                onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => setUrl('')}
+              className="p-1 text-zinc-500 hover:text-red-400 transition-colors rounded-md hover:bg-zinc-800"
+              title="Remove logo"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      ) : (
+        <label
+          onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleDrop}
+          className={`flex flex-col items-center justify-center p-3 sm:p-4 rounded-xl border-2 border-dashed cursor-pointer transition-all ${
+            isDragging 
+              ? 'border-emerald-500 bg-emerald-950/20' 
+              : 'border-zinc-800 hover:border-zinc-700 bg-zinc-900/40 hover:bg-zinc-900/70'
+          }`}
+        >
+          {isUploading ? (
+            <div className="flex items-center gap-2 text-xs text-emerald-400 py-1">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Uploading to cloud...</span>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-1 text-center py-1">
+              <UploadCloud className="w-5 h-5 text-zinc-400" />
+              <p className="text-xs text-zinc-300 font-medium">
+                <span className="text-emerald-400">Click to browse</span> or drag & drop
+              </p>
+              <p className="text-[10px] text-zinc-500">SVG, PNG, JPG, or WebP</p>
+            </div>
+          )}
+          <input
+            type="file"
+            accept="image/*,.svg"
+            className="hidden"
+            disabled={isUploading}
+            onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+          />
+        </label>
+      )}
+    </div>
+  )
+}
+
+type Tab = 'projects' | 'experience' | 'education' | 'resumes' | 'testimonials' | 'stack'
 
 export default function AdminClient({ 
   projects, 
   experiences, 
+  education = [],
   resumes, 
   testimonials, 
   skills 
@@ -35,9 +206,10 @@ export default function AdminClient({
   const tabs: { id: Tab, label: string }[] = [
     { id: 'projects', label: 'Projects' },
     { id: 'experience', label: 'Experience' },
-    { id: 'resumes', label: 'Resumes' },
-    { id: 'testimonials', label: 'Testimonials' },
+    { id: 'education', label: 'Education' },
     { id: 'stack', label: 'Stack' },
+    { id: 'testimonials', label: 'Testimonials' },
+    { id: 'resumes', label: 'Resumes' },
   ]
 
   async function handleDelete(table: string, id: string) {
@@ -72,6 +244,9 @@ export default function AdminClient({
       } else if (activeTab === 'experience') {
         if (editingItem) await updateExperience(editingItem.id, formData)
         else await addExperience(formData)
+      } else if (activeTab === 'education') {
+        if (editingItem) await updateEducation(editingItem.id, formData)
+        else await addEducation(formData)
       } else if (activeTab === 'testimonials') {
         if (editingItem) await updateTestimonial(editingItem.id, formData)
         else await addTestimonial(formData)
@@ -104,9 +279,9 @@ export default function AdminClient({
       }
       setIsModalOpen(false)
       setEditingItem(null)
-    } catch (error) {
+    } catch (error: any) {
       console.error(error)
-      alert('Failed to save. Please check your inputs and try again.')
+      alert(`Failed to save: ${error?.message || 'Please check your inputs and try again.'}`)
     } finally {
       setIsSubmitting(false)
     }
@@ -170,14 +345,27 @@ export default function AdminClient({
         {/* EXPERIENCE */}
         {activeTab === 'experience' && experiences.map((e: any) => (
           <div key={e.id} className="w-full flex items-center justify-between p-4 bg-zinc-950 border border-zinc-800 rounded-xl hover:border-zinc-600 transition-colors">
-            <div className="flex flex-col gap-1">
-              <h3 className="font-medium text-zinc-100 flex items-center gap-2">
-                {e.role} at {e.company}
-                {!e.is_published && <span className="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full">Draft</span>}
-              </h3>
-              <p className="text-xs text-zinc-500">{e.start_date} to {e.end_date || 'Present'}</p>
+            <div className="flex items-center gap-3.5 pr-4 min-w-0">
+              {e.company_logo_url ? (
+                <div className="w-11 h-11 shrink-0 flex items-center justify-center">
+                  <img src={e.company_logo_url} alt={e.company} className="w-full h-full object-contain rounded-lg" />
+                </div>
+              ) : (
+                <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0">
+                  <Briefcase className="w-4 h-4 text-zinc-500" />
+                </div>
+              )}
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <h3 className="font-medium text-zinc-100 flex items-center gap-2 flex-wrap">
+                  <span>{e.role}</span>
+                  <span className="text-zinc-500">at</span>
+                  <span className="text-red-400 font-semibold">{e.company}</span>
+                  {!e.is_published && <span className="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full">Draft</span>}
+                </h3>
+                <p className="text-xs text-zinc-500">{e.start_date} to {e.end_date || 'Present'}</p>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 shrink-0">
               <button onClick={() => handleTogglePublish('experiences', e.id, e.is_published)} className="text-zinc-500 hover:text-white" title={e.is_published ? "Hide" : "Publish"}>
                 {e.is_published ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
               </button>
@@ -185,6 +373,57 @@ export default function AdminClient({
                 <Edit2 className="w-4 h-4" />
               </button>
               <button onClick={() => handleDelete('experiences', e.id)} className="text-zinc-500 hover:text-red-400" title="Delete">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {/* EDUCATION */}
+        {activeTab === 'education' && education.map((ed: any) => (
+          <div key={ed.id} className="w-full flex items-center justify-between p-4 bg-zinc-950 border border-zinc-800 rounded-xl hover:border-zinc-600 transition-colors">
+            <div className="flex items-center gap-3.5 pr-4 min-w-0">
+              {ed.institution_logo_url ? (
+                <div className="w-11 h-11 shrink-0 flex items-center justify-center">
+                  <img src={ed.institution_logo_url} alt={ed.institution} className="w-full h-full object-contain rounded-lg" />
+                </div>
+              ) : (
+                <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0">
+                  <GraduationCap className="w-4 h-4 text-zinc-500" />
+                </div>
+              )}
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <h3 className="font-medium text-zinc-100 flex items-center gap-2 flex-wrap">
+                  <span className="text-xs bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 px-2 py-0.5 rounded-md font-semibold">
+                    {ed.stage}
+                  </span>
+                  <span className="truncate">{ed.degree}</span>
+                  {ed.is_current && <span className="text-[10px] bg-emerald-900/50 text-emerald-300 px-2 py-0.5 rounded-full">Current</span>}
+                  {!ed.is_published && <span className="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full">Draft</span>}
+                </h3>
+                <p className="text-xs text-zinc-400 flex items-center gap-1.5 flex-wrap">
+                  <span>{ed.institution}</span>
+                  {ed.board && (
+                    <span className="flex items-center gap-1 text-zinc-500">
+                      • {ed.board_logo_url && <img src={ed.board_logo_url} alt="" className="w-3.5 h-3.5 rounded-full object-contain inline-block" />}
+                      ({ed.board})
+                    </span>
+                  )}
+                  <span className="font-mono text-zinc-500">• {ed.period}</span>
+                </p>
+                {ed.description && (
+                  <p className="text-xs text-zinc-500 line-clamp-1 italic mt-0.5">"{ed.description}"</p>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <button onClick={() => handleTogglePublish('education', ed.id, ed.is_published)} className="text-zinc-500 hover:text-white" title={ed.is_published ? "Hide" : "Publish"}>
+                {ed.is_published ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+              </button>
+              <button onClick={() => openEdit(ed)} className="text-zinc-500 hover:text-blue-400" title="Edit">
+                <Edit2 className="w-4 h-4" />
+              </button>
+              <button onClick={() => handleDelete('education', ed.id)} className="text-zinc-500 hover:text-red-400" title="Delete">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
@@ -270,7 +509,7 @@ export default function AdminClient({
               <button type="button" onClick={() => { setIsModalOpen(false); setEditingItem(null); }} className="text-zinc-500 hover:text-white">✕</button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
+            <form key={editingItem?.id || 'new'} onSubmit={handleSubmit} className="p-6 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
               
               {/* PROJECTS FORM */}
               {activeTab === 'projects' && (
@@ -311,7 +550,73 @@ export default function AdminClient({
                       <input name="end_date" defaultValue={editingItem?.end_date} type="date" className="bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2 text-white text-sm" />
                     </div>
                   </div>
+                  <ImageUploadField
+                    label="Company Logo (Optional)"
+                    name="company_logo_url"
+                    defaultValue={editingItem?.company_logo_url}
+                    supabase={supabase}
+                    folder="logos"
+                  />
+
                   <textarea name="description" defaultValue={editingItem?.description} placeholder="Description of your responsibilities..." rows={4} className="bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2 text-white" />
+                </>
+              )}
+
+              {/* EDUCATION FORM */}
+              {activeTab === 'education' && (
+                <>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-zinc-400">Stage / Category</label>
+                    <input required name="stage" defaultValue={editingItem?.stage} placeholder="e.g. Graduation, High Schooling, Junior Schooling, Masters" className="bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2 text-white" />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-zinc-400">Degree / Qualification</label>
+                    <input required name="degree" defaultValue={editingItem?.degree} placeholder="e.g. B.E in Computer Science Engineering (Data Science)" className="bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2 text-white" />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-zinc-400">Institution Name</label>
+                    <input required name="institution" defaultValue={editingItem?.institution} placeholder="e.g. A.P. Shah Institute Of Technology, Thane" className="bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2 text-white" />
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div className="flex-1 flex flex-col gap-1">
+                      <label className="text-xs text-zinc-400">Board / University</label>
+                      <input name="board" defaultValue={editingItem?.board} placeholder="e.g. University of Mumbai / CBSE / CISCE" className="bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2 text-white" />
+                    </div>
+                    <div className="flex-1 flex flex-col gap-1">
+                      <label className="text-xs text-zinc-400">Period (Years)</label>
+                      <input required name="period" defaultValue={editingItem?.period} placeholder="e.g. 2023 — 2027" className="bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2 text-white" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <ImageUploadField
+                      label="Institute Logo (Optional)"
+                      name="institution_logo_url"
+                      defaultValue={editingItem?.institution_logo_url}
+                      supabase={supabase}
+                      folder="logos"
+                    />
+                    <ImageUploadField
+                      label="Board Logo (Optional)"
+                      name="board_logo_url"
+                      defaultValue={editingItem?.board_logo_url}
+                      supabase={supabase}
+                      folder="logos"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-zinc-400">Description / Highlights (Optional)</label>
+                    <textarea name="description" defaultValue={editingItem?.description} placeholder="Key coursework, achievements, CGPA, notable activities (Markdown supported)..." rows={3} className="bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2 text-white text-sm" />
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-2">
+                    <input type="checkbox" id="is_current" name="is_current" defaultChecked={editingItem?.is_current} className="w-4 h-4 rounded bg-zinc-900 border-zinc-700 text-emerald-500 focus:ring-emerald-500" />
+                    <label htmlFor="is_current" className="text-sm text-zinc-300">Currently Pursuing</label>
+                  </div>
                 </>
               )}
 

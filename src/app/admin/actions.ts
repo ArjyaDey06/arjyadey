@@ -50,14 +50,20 @@ export async function updateProject(id: string, formData: FormData) {
 export async function addExperience(formData: FormData) {
   const supabase = await checkAuth()
   
-  await supabase.from('experiences').insert([{
+  const { error } = await supabase.from('experiences').insert([{
     company: formData.get('company'),
     role: formData.get('role'),
     start_date: formData.get('start_date'),
     end_date: formData.get('end_date') || null,
     description: formData.get('description'),
+    company_logo_url: formData.get('company_logo_url') || null,
     is_published: true,
   }])
+
+  if (error) {
+    console.error('addExperience error:', error)
+    throw new Error(error.message)
+  }
 
   revalidatePath('/admin')
   revalidatePath('/')
@@ -66,13 +72,68 @@ export async function addExperience(formData: FormData) {
 export async function updateExperience(id: string, formData: FormData) {
   const supabase = await checkAuth()
   
-  await supabase.from('experiences').update({
+  const { error } = await supabase.from('experiences').update({
     company: formData.get('company'),
     role: formData.get('role'),
     start_date: formData.get('start_date'),
     end_date: formData.get('end_date') || null,
     description: formData.get('description'),
+    company_logo_url: formData.get('company_logo_url') || null,
   }).eq('id', id)
+
+  if (error) {
+    console.error('updateExperience error:', error)
+    throw new Error(error.message)
+  }
+
+  revalidatePath('/admin')
+  revalidatePath('/')
+}
+
+export async function addEducation(formData: FormData) {
+  const supabase = await checkAuth()
+  
+  const { error } = await supabase.from('education').insert([{
+    stage: formData.get('stage'),
+    degree: formData.get('degree'),
+    institution: formData.get('institution'),
+    board: formData.get('board'),
+    period: formData.get('period'),
+    description: formData.get('description'),
+    institution_logo_url: formData.get('institution_logo_url') || null,
+    board_logo_url: formData.get('board_logo_url') || null,
+    is_current: formData.get('is_current') === 'on',
+    is_published: true,
+  }])
+
+  if (error) {
+    console.error('addEducation error:', error)
+    throw new Error(error.message)
+  }
+
+  revalidatePath('/admin')
+  revalidatePath('/')
+}
+
+export async function updateEducation(id: string, formData: FormData) {
+  const supabase = await checkAuth()
+  
+  const { error } = await supabase.from('education').update({
+    stage: formData.get('stage'),
+    degree: formData.get('degree'),
+    institution: formData.get('institution'),
+    board: formData.get('board'),
+    period: formData.get('period'),
+    description: formData.get('description'),
+    institution_logo_url: formData.get('institution_logo_url') || null,
+    board_logo_url: formData.get('board_logo_url') || null,
+    is_current: formData.get('is_current') === 'on',
+  }).eq('id', id)
+
+  if (error) {
+    console.error('updateEducation error:', error)
+    throw new Error(error.message)
+  }
 
   revalidatePath('/admin')
   revalidatePath('/')

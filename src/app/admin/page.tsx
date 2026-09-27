@@ -15,12 +15,14 @@ export default async function AdminDashboard() {
   const [
     { data: projects },
     { data: experiences },
+    { data: education },
     { data: resumes },
     { data: testimonials },
     { data: skills }
   ] = await Promise.all([
     supabase.from('projects').select('*').order('sort_order', { ascending: true }),
     supabase.from('experiences').select('*').order('start_date', { ascending: false }),
+    supabase.from('education').select('*').order('sort_order', { ascending: true }),
     supabase.from('resumes').select('*').order('created_at', { ascending: false }),
     supabase.from('testimonials').select('*').order('created_at', { ascending: false }),
     supabase.from('skills').select('*').order('category', { ascending: true })
@@ -40,6 +42,7 @@ export default async function AdminDashboard() {
       <AdminClient 
         projects={projects || []} 
         experiences={experiences || []} 
+        education={education || []}
         resumes={resumes || []} 
         testimonials={testimonials || []}
         skills={skills || []}
