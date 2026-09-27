@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server';
 import Navbar from "@/components/Navbar";
 import GithubContributions from "@/components/GithubContributions";
+import TechStack from "@/components/TechStack";
 import { getGitHubContributions } from '@/utils/github';
 import { ExternalLink, Code, Download, Briefcase, Quote, Wrench, Globe, ArrowDown, GraduationCap, BookOpen, School, Calendar } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -144,19 +145,7 @@ export default async function Home() {
 
         {/* 2. Tech Stack Section (Synchronized right after About) */}
         {skills && skills.length > 0 && (
-          <section id="stack" className="scroll-mt-28 sm:scroll-mt-32 flex flex-col gap-6 sm:gap-8">
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-3">
-              <Wrench className="w-6 h-6 sm:w-7 sm:h-7 text-zinc-400" /> Tech Stack
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-3">
-              {skills.map((skill) => (
-                <div key={skill.id} className="px-3.5 sm:px-4 py-2 sm:py-2.5 bg-zinc-950 border border-zinc-800/80 rounded-xl flex flex-col hover:border-zinc-600 transition-colors shadow-sm">
-                  <span className="font-semibold text-zinc-200 text-sm sm:text-base break-words">{skill.name}</span>
-                  <span className="text-[11px] sm:text-xs text-zinc-500">{skill.category}</span>
-                </div>
-              ))}
-            </div>
-          </section>
+          <TechStack skills={skills} />
         )}
 
         {/* 3. Projects Section */}

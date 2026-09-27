@@ -86,6 +86,9 @@ create table if not exists public.skills (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- If skills table already exists, ensure icon_name column is added:
+alter table public.skills add column if not exists icon_name text;
+
 -- 7. Enable Row Level Security (RLS)
 alter table public.projects enable row level security;
 alter table public.experiences enable row level security;

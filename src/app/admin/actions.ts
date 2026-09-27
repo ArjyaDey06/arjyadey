@@ -181,10 +181,18 @@ export async function updateTestimonial(id: string, formData: FormData) {
 export async function addSkill(formData: FormData) {
   const supabase = await checkAuth()
   
-  await supabase.from('skills').insert([{
+  const icon_name = (formData.get('icon_name') as string)?.trim() || null
+
+  const { error } = await supabase.from('skills').insert([{
     name: formData.get('name'),
     category: formData.get('category'),
+    icon_name,
   }])
+
+  if (error) {
+    console.error('addSkill error:', error)
+    throw new Error(error.message)
+  }
 
   revalidatePath('/admin')
   revalidatePath('/')
@@ -193,10 +201,18 @@ export async function addSkill(formData: FormData) {
 export async function updateSkill(id: string, formData: FormData) {
   const supabase = await checkAuth()
   
-  await supabase.from('skills').update({
+  const icon_name = (formData.get('icon_name') as string)?.trim() || null
+
+  const { error } = await supabase.from('skills').update({
     name: formData.get('name'),
     category: formData.get('category'),
+    icon_name,
   }).eq('id', id)
+
+  if (error) {
+    console.error('updateSkill error:', error)
+    throw new Error(error.message)
+  }
 
   revalidatePath('/admin')
   revalidatePath('/')

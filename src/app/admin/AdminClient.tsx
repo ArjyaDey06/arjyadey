@@ -17,6 +17,7 @@ import {
   togglePublish 
 } from './actions'
 import { createClient } from '@/utils/supabase/client'
+import { getTechIcon } from '@/utils/techIcons'
 import { 
   Eye, 
   EyeOff, 
@@ -26,8 +27,105 @@ import {
   Loader2, 
   Briefcase,
   GraduationCap,
+  Wrench,
+  Plus,
   Image as ImageIcon 
 } from 'lucide-react'
+
+const DEFAULT_STACK_CATEGORIES = [
+  'Languages',
+  'Frontend',
+  'Backend & API',
+  'Databases & Storage',
+  'AI & Machine Learning',
+  'Cloud & DevOps',
+  'Workflow & Automation',
+  'Data Analytics & BI',
+]
+
+function StackFormFields({
+  editingItem,
+  availableCategories,
+  supabase,
+}: {
+  editingItem: any
+  availableCategories: string[]
+  supabase: any
+}) {
+  const [name, setName] = useState(editingItem?.name || '')
+  const [selectedCategory, setSelectedCategory] = useState(
+    editingItem?.category || availableCategories[0] || 'Languages'
+  )
+  const [isCustomCategory, setIsCustomCategory] = useState(
+    Boolean(editingItem?.category && !availableCategories.includes(editingItem.category))
+  )
+  const [customCategory, setCustomCategory] = useState(
+    isCustomCategory ? editingItem.category : ''
+  )
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs text-zinc-400 font-medium">Tool / Technology Name</label>
+        <input
+          required
+          name="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="e.g. Next.js, FastAPI, Docker, Kestra"
+          className="bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2 text-white text-sm focus:border-emerald-500 focus:outline-none"
+        />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center justify-between">
+          <label className="text-xs text-zinc-400 font-medium">Category</label>
+          <button
+            type="button"
+            onClick={() => setIsCustomCategory(!isCustomCategory)}
+            className="text-[11px] text-zinc-400 hover:text-emerald-400 transition-colors"
+          >
+            {isCustomCategory ? 'Pick from existing' : '+ Add new custom category'}
+          </button>
+        </div>
+
+        {isCustomCategory ? (
+          <input
+            required
+            name="category"
+            value={customCategory}
+            onChange={(e) => setCustomCategory(e.target.value)}
+            placeholder="Type new category (e.g. Mobile, Security, Blockchain)"
+            className="bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2 text-white text-sm focus:border-emerald-500 focus:outline-none"
+          />
+        ) : (
+          <select
+            required
+            name="category"
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2 text-white text-sm focus:border-emerald-500 focus:outline-none"
+          >
+            {availableCategories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {/* Drag & Drop File Upload or URL entry */}
+      <ImageUploadField
+        label="Custom Logo / SVG (Drag & Drop or Enter URL)"
+        name="icon_name"
+        defaultValue={editingItem?.icon_name || ''}
+        supabase={supabase}
+        folder="tech-icons"
+      />
+    </div>
+  )
+}
 
 function ImageUploadField({
   label,
@@ -211,6 +309,13 @@ export default function AdminClient({
     { id: 'testimonials', label: 'Testimonials' },
     { id: 'resumes', label: 'Resumes' },
   ]
+
+  const availableCategories = Array.from(
+    new Set([
+      ...DEFAULT_STACK_CATEGORIES,
+      ...(skills || []).map((s: any) => s.category).filter(Boolean),
+    ])
+  )
 
   async function handleDelete(table: string, id: string) {
     if (confirm('Are you sure you want to delete this item?')) {
@@ -465,22 +570,30 @@ export default function AdminClient({
         ))}
 
         {/* STACK */}
-        {activeTab === 'stack' && skills.map((s: any) => (
-          <div key={s.id} className="w-full flex items-center justify-between p-4 bg-zinc-950 border border-zinc-800 rounded-xl hover:border-zinc-600 transition-colors">
-            <div className="flex flex-col gap-1">
-              <h3 className="font-medium text-zinc-100">{s.name}</h3>
-              <p className="text-xs text-zinc-500">{s.category}</p>
+        {activeTab === 'stack' && skills.map((s: any) => {
+          const iconUrl = getTechIcon(s.name, s.icon_name);
+          return (
+            <div key={s.id} className="w-full flex items-center justify-between p-4 bg-zinc-950 border border-zinc-800 rounded-xl hover:border-zinc-600 transition-colors">
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="w-9 h-9 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 p-1.5 overflow-hidden">
+                  <img src={iconUrl} alt={s.name} className="w-full h-full object-contain" />
+                </div>
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <h3 className="font-semibold text-zinc-100">{s.name}</h3>
+                  <span className="text-xs text-zinc-400">{s.category}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <button onClick={() => openEdit(s)} className="text-zinc-500 hover:text-blue-400" title="Edit">
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button onClick={() => handleDelete('skills', s.id)} className="text-zinc-500 hover:text-red-400" title="Delete">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <button onClick={() => openEdit(s)} className="text-zinc-500 hover:text-blue-400" title="Edit">
-                <Edit2 className="w-4 h-4" />
-              </button>
-              <button onClick={() => handleDelete('skills', s.id)} className="text-zinc-500 hover:text-red-400" title="Delete">
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
 
         {/* RESUMES */}
         {activeTab === 'resumes' && resumes.map((r: any) => (
@@ -643,17 +756,11 @@ export default function AdminClient({
 
               {/* STACK FORM */}
               {activeTab === 'stack' && (
-                <>
-                  <input required name="name" defaultValue={editingItem?.name} placeholder="Skill Name (e.g. React)" className="bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2 text-white" />
-                  <select required name="category" defaultValue={editingItem?.category || ""} className="bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2 text-white outline-none">
-                    <option value="">Select Category</option>
-                    <option value="Frontend">Frontend</option>
-                    <option value="Backend">Backend</option>
-                    <option value="Database">Database</option>
-                    <option value="Tools">Tools</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </>
+                <StackFormFields
+                  editingItem={editingItem}
+                  availableCategories={availableCategories}
+                  supabase={supabase}
+                />
               )}
 
               {/* RESUMES FORM */}

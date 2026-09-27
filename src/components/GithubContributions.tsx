@@ -113,7 +113,7 @@ export default function GithubContributions({ username, initialData }: Props) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+        <div className="flex items-center gap-2 self-start sm:self-auto">
           {/* Active Navigation Arrow Buttons */}
           <div className="flex items-center gap-1 bg-zinc-900/90 border border-zinc-800 rounded-full p-1 shadow-inner">
             <button
@@ -135,16 +135,6 @@ export default function GithubContributions({ username, initialData }: Props) {
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
-
-          <a 
-            href={`https://github.com/${username}`} 
-            target="_blank" 
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 text-xs font-medium text-zinc-300 hover:text-white transition-all duration-200 shadow-sm"
-          >
-            @{username}
-            <span className="text-zinc-500 group-hover:text-zinc-300">↗</span>
-          </a>
         </div>
       </div>
 
